@@ -10,7 +10,8 @@ class Model(models.Model):
         (4, 'mat2vec'),
         (5, 'mat_shuffled'),
         (6, 'oliynyk'),
-        (7, 'random_200')
+        (7, 'random_200'),
+        (8, 'random_400')
     ]
 
     MAT_PROP_CHOICES = [
@@ -23,15 +24,15 @@ class Model(models.Model):
         (6, 'energy_atom')
     ]
 
-    name = models.CharField(default=None, max_length=100, null=True)
+    name = models.CharField(default=None, max_length=100)
     cbfv = models.SmallIntegerField(default=0, choices=CBFV_CHOICES, null=False)
     mat_prop = models.SmallIntegerField(default=0, choices=MAT_PROP_CHOICES, verbose_name='material property',
                                         null=False)
     batch_size = models.IntegerField(default=64, null=False)
     epochs = models.IntegerField(default=200, null=False)
-    model_graph = models.ImageField
+    #model_graph = models.ImageField(null=True)
 
-    learning_graph = models.ImageField(upload_to='graphs', null=True)
+    #learning_graph = models.ImageField(upload_to='graphs', null=True)
 
     def __str__(self):
         return self.name
@@ -51,17 +52,22 @@ class Model(models.Model):
         from matplotlib.pyplot import subplots
 
         from tensorflow.compat.v1 import ConfigProto, Session
+        import tensorflow as tf
 
         # setting the name
         self.set_name()
 
         # settign the GPU
-        config = ConfigProto
-        config.gpu_options.per_process_gpu_memory_fraction = 1
+        config = ConfigProto()
+        config.gpu_options.allow_growth = True
         session = Session(config=config)
 
+        #clearing the session
+        tf.keras.backend.clear_session()
+
         # getting the data
-        data = generate_image_data_generators(material_prop=self.mat_prop, cbfv=self.cbfv, batch_size=self.batch_size)
+        data = generate_image_data_generators(material_prop=self.MAT_PROP_CHOICES[self.mat_prop][-1],
+                                              cbfv=self.CBFV_CHOICES[self.cbfv][-1], batch_size=self.batch_size)
 
         model_params = ModelParams.objects.get(model=self).get_dict()
 
@@ -71,21 +77,24 @@ class Model(models.Model):
 
         callbacks = []
         for callback in Callbacks.objects.filter(model=self):
-            callbacks.append(getattr(import_module('.callbacks', 'tensorflow.keras'), str(callback))(monitor=callback.monitor, patience=callback.patience))
+            callbacks.append(
+                getattr(import_module('.callbacks', 'tensorflow.keras'), str(callback))(monitor=callback.monitor,
+                                                                                        patience=callback.patience))
 
         opt = getattr(import_module('.optimizers', 'tensorflow.keras'), model_params['optimizer'])(
             model_params['learning_rate'])
 
-        model = Alex_Net(input=data['input'], regularization=self.REGULARIZATION_CHOICES[self.regularization][-1],
-                         dropout=self.dropout)
+        model = Alex_Net(input=data['input'], regularization=model_params['regularization'], dropout=model_params['dropout'])
 
         model.compile(loss=model_params['loss'], optimizer=opt, metrics=metrics)
+        model.summary()
 
         history = model.fit(data['train'],
                             epochs=self.epochs,
                             steps_per_epoch=floor(data['train'].n / data['train'].batch_size),
                             validation_data=data['val'],
-                            callbacks=callbacks)
+                            #callbacks=callbacks)
+                            )
 
         # saving the training image
         fig, ax = subplots(3, 1)
@@ -101,7 +110,10 @@ class Model(models.Model):
         ax[2].plot(history.history['val_mean_absolute_error'][3:], color='r', label='val MAE')
         ax[2].legend(loc='best', shadow=True)
 
-        #saving the training data
+        # evaluating the model
+        eval = model.evaluate(data['test'])
+
+        # saving the training data
         kwargs_train = {
             'model': self,
             'run': 1,
@@ -120,8 +132,15 @@ class Model(models.Model):
         }
         ModelScores.objects.get_or_create(**kwargs_val)
 
-
+        kwargs_test = {
+            'model': self,
+            'run': 0,
+            'loss': eval[0],
+            'MAE': eval[metrics.index('mean_absolute_error')],
+            'MSE': eval[metrics.index('mean_squared_error')]
+        }
+        ModelScores.objects.get_or_create(**kwargs_test)
 
     def set_name(self):
-        self.name = '{} -> {}'.format(self.cbfv, self.mat_prop)
+        self.name = '{} -> {}'.format(self.CBFV_CHOICES[self.cbfv][-1], self.MAT_PROP_CHOICES[self.mat_prop][-1])
         self.save()

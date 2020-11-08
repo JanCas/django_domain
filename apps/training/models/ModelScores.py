@@ -13,7 +13,6 @@ class ModelScores(models.Model):
     loss = models.FloatField(default=None, null=True)
     MAE = models.FloatField(default=None, null=True)
     MSE = models.FloatField(default=None, null=True)
-    R2 = models.FloatField(default=None, null=True)
 
     class Meta:
         verbose_name_plural = 'Model Scores'

@@ -17,6 +17,7 @@ class ModelParamsInLine(admin.TabularInline):
 
 class MetricsInLine(admin.TabularInline):
     model = Metrics
+    max_num = 3
 
 
 class CallbacksInLine(admin.TabularInline):
@@ -24,6 +25,7 @@ class CallbacksInLine(admin.TabularInline):
 
 class ModelScoresInLine(admin.TabularInline):
     model = ModelScores
+    max_num = 3
 
 # head models
 class ModelAdmin(admin.ModelAdmin):
@@ -33,8 +35,7 @@ class ModelAdmin(admin.ModelAdmin):
 
     actions = ['train']
 
-    @staticmethod
-    def train(request, queryset):
+    def train(self, request, queryset):
         for model in queryset:
             model.train()
 

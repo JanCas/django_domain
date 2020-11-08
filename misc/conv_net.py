@@ -19,9 +19,7 @@ def Alex_Net(input: Input, regularization: string = None, dropout: float = .4) -
     model.add(MaxPooling2D(strides=2, pool_size=3))
 
     # layer3-5
-    for i in range(3):
-        model.add(Conv2D(filters=384, kernel_size=3, activation='relu'))
-
+    model.add(Conv2D(filters=384, kernel_size=3, activation='relu', padding='same'))
     model.add(MaxPooling2D(pool_size=3, strides=2))
 
     model.add(Flatten())
