@@ -120,7 +120,7 @@ class Model(models.Model):
         }
         ModelScores.objects.get_or_create(**kwargs_val)
 
-        
+
 
     def set_name(self):
         self.name = '{} -> {}'.format(self.cbfv, self.mat_prop)
