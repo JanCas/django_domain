@@ -9,7 +9,7 @@ class Callbacks(models.Model):
     model = models.ForeignKey('training.Model', on_delete=models.CASCADE)
     name = models.SmallIntegerField(default=0, choices=NAME_CHOICES ,null=False)
     monitor = models.CharField(default='val_loss', null=False, max_length=50)
-    patience = models.IntegerField(default=3, null=False)
+    patience = models.IntegerField(default=10, null=False)
 
     class Meta:
         verbose_name_plural = 'Callbacks'

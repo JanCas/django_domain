@@ -12,7 +12,7 @@ class Metrics(models.Model):
     ]
 
     model = models.ForeignKey('training.Model', on_delete=models.CASCADE)
-    metric = models.SmallIntegerField(default=1, choices=METRICS_CHOICES)
+    metric = models.SmallIntegerField(default=0, choices=METRICS_CHOICES)
 
     class Meta:
         verbose_name_plural = 'Metrics'

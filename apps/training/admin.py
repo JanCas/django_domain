@@ -17,21 +17,22 @@ class ModelParamsInLine(admin.TabularInline):
 
 class MetricsInLine(admin.TabularInline):
     model = Metrics
-    max_num = 3
+    max_num = 2
 
 
 class CallbacksInLine(admin.TabularInline):
     model = Callbacks
+    max_num = 2
 
 class ModelScoresInLine(admin.TabularInline):
     model = ModelScores
-    max_num = 3
+    max_num = 0
 
 # head models
 class ModelAdmin(admin.ModelAdmin):
     inlines = (ModelParamsInLine, MetricsInLine, CallbacksInLine, ModelScoresInLine)
 
-    list_display = ('name', 'cbfv', 'mat_prop', 'batch_size', 'epochs')
+    list_display = ('name', 'cbfv', 'mat_prop', 'batch_size', 'epochs', 'trained')
 
     actions = ['train']
 

@@ -30,9 +30,12 @@ class Model(models.Model):
                                         null=False)
     batch_size = models.IntegerField(default=64, null=False)
     epochs = models.IntegerField(default=200, null=False)
-    #model_graph = models.ImageField(null=True)
 
-    #learning_graph = models.ImageField(upload_to='graphs', null=True)
+    trained = models.BooleanField(default=False, null=False)
+
+    # model_graph = models.ImageField(null=True)
+
+    # learning_graph = models.ImageField(upload_to='graphs', null=True)
 
     def __str__(self):
         return self.name
@@ -41,13 +44,14 @@ class Model(models.Model):
         from .ModelParams import ModelParams
         from .Metrics import Metrics
         from .Callbacks import Callbacks
-        from .ModelScores import ModelScores
 
         from misc.conv_net import Alex_Net
+        from misc.helper_functions import update_model_scores
         from misc.pandas_creator import generate_image_data_generators
 
         from importlib import import_module
         from numpy import floor
+        from gc import collect
 
         from matplotlib.pyplot import subplots
 
@@ -62,84 +66,69 @@ class Model(models.Model):
         config.gpu_options.allow_growth = True
         session = Session(config=config)
 
-        #clearing the session
+        # clearing the session
         tf.keras.backend.clear_session()
+        try:
+            # getting the data
+            data = generate_image_data_generators(material_prop=self.MAT_PROP_CHOICES[self.mat_prop][-1],
+                                                  cbfv=self.CBFV_CHOICES[self.cbfv][-1], batch_size=self.batch_size)
 
-        # getting the data
-        data = generate_image_data_generators(material_prop=self.MAT_PROP_CHOICES[self.mat_prop][-1],
-                                              cbfv=self.CBFV_CHOICES[self.cbfv][-1], batch_size=self.batch_size)
+            model_params = ModelParams.objects.get_or_create(model=self)[0].get_dict()
 
-        model_params = ModelParams.objects.get(model=self).get_dict()
+            metrics = []
+            for metric in Metrics.objects.filter(model=self):
+                metrics.append(metric.get_metric())
 
-        metrics = []
-        for metric in Metrics.objects.filter(model=self):
-            metrics.append(metric.get_metric())
+            callbacks = []
+            for callback in Callbacks.objects.filter(model=self):
+                callbacks.append(
+                    getattr(import_module('.callbacks', 'tensorflow.keras'), str(callback))(monitor=callback.monitor,
+                                                                                            patience=callback.patience))
 
-        callbacks = []
-        for callback in Callbacks.objects.filter(model=self):
-            callbacks.append(
-                getattr(import_module('.callbacks', 'tensorflow.keras'), str(callback))(monitor=callback.monitor,
-                                                                                        patience=callback.patience))
+            opt = getattr(import_module('.optimizers', 'tensorflow.keras'), model_params['optimizer'])(
+                model_params['learning_rate'])
 
-        opt = getattr(import_module('.optimizers', 'tensorflow.keras'), model_params['optimizer'])(
-            model_params['learning_rate'])
+            model = Alex_Net(input=data['input'], regularization=model_params['regularization'],
+                             dropout=model_params['dropout'])
 
-        model = Alex_Net(input=data['input'], regularization=model_params['regularization'], dropout=model_params['dropout'])
+            model.compile(loss=model_params['loss'], optimizer=opt, metrics=metrics)
+            model.summary()
 
-        model.compile(loss=model_params['loss'], optimizer=opt, metrics=metrics)
-        model.summary()
+            history = model.fit(data['train'],
+                                epochs=self.epochs,
+                                steps_per_epoch=floor(data['train'].n / data['train'].batch_size),
+                                validation_data=data['val'],
+                                callbacks=callbacks)
 
-        history = model.fit(data['train'],
-                            epochs=self.epochs,
-                            steps_per_epoch=floor(data['train'].n / data['train'].batch_size),
-                            validation_data=data['val'],
-                            #callbacks=callbacks)
-                            )
+            # saving the training image
+            fig, ax = subplots(3, 1)
+            ax[0].plot(history.history['loss'][3:], color='b', label="Training loss")
+            ax[0].plot(history.history['val_loss'][3:], color='r', label="validation loss", axes=ax[0])
+            ax[0].legend(loc='best', shadow=True)
 
-        # saving the training image
-        fig, ax = subplots(3, 1)
-        ax[0].plot(history.history['loss'][3:], color='b', label="Training loss")
-        ax[0].plot(history.history['val_loss'][3:], color='r', label="validation loss", axes=ax[0])
-        ax[0].legend(loc='best', shadow=True)
+            ax[1].plot(history.history['mean_squared_error'][3:], color='b', label="mean squared error")
+            ax[1].plot(history.history['val_mean_squared_error'][3:], color='r', label="Validation MSE")
+            ax[1].legend(loc='best', shadow=True)
 
-        ax[1].plot(history.history['mean_squared_error'][3:], color='b', label="mean squared error")
-        ax[1].plot(history.history['val_mean_squared_error'][3:], color='r', label="Validation MSE")
-        ax[1].legend(loc='best', shadow=True)
+            ax[2].plot(history.history['mean_absolute_error'][3:], color='b', label='mean absolute error')
+            ax[2].plot(history.history['val_mean_absolute_error'][3:], color='r', label='val MAE')
+            ax[2].legend(loc='best', shadow=True)
 
-        ax[2].plot(history.history['mean_absolute_error'][3:], color='b', label='mean absolute error')
-        ax[2].plot(history.history['val_mean_absolute_error'][3:], color='r', label='val MAE')
-        ax[2].legend(loc='best', shadow=True)
+            # evaluating the model
+            eval = model.evaluate(data['test'])
 
-        # evaluating the model
-        eval = model.evaluate(data['test'])
+            # saving the training data
+            update_model_scores(self, history, eval, metrics)
 
-        # saving the training data
-        kwargs_train = {
-            'model': self,
-            'run': 1,
-            'loss': history.history['loss'][-1],
-            'MAE': history.history['mean_absolute_error'][-1],
-            'MSE': history.history['mean_squared_error'][-1]
-        }
-        ModelScores.objects.get_or_create(**kwargs_train)
+            self.trained = True
+            self.save()
+        except tf.errors.ResourceExhaustedError:
+            if self.batch_size > 4:
+                self.batch_size /= 2
+                self.save()
 
-        kwargs_val = {
-            'model': self,
-            'run': 2,
-            'loss': history.history['val_loss'][-1],
-            'MAE': history.history['val_mean_absolute_error'][-1],
-            'MSE': history.history['val_mean_squared_error'][-1]
-        }
-        ModelScores.objects.get_or_create(**kwargs_val)
-
-        kwargs_test = {
-            'model': self,
-            'run': 0,
-            'loss': eval[0],
-            'MAE': eval[metrics.index('mean_absolute_error')],
-            'MSE': eval[metrics.index('mean_squared_error')]
-        }
-        ModelScores.objects.get_or_create(**kwargs_test)
+        collect()
+        collect()
 
     def set_name(self):
         self.name = '{} -> {}'.format(self.CBFV_CHOICES[self.cbfv][-1], self.MAT_PROP_CHOICES[self.mat_prop][-1])
