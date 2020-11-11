@@ -12,7 +12,7 @@ def get_csv_and_pred(i=42):
             'Au', 'Zr', 'Ga', 'In', 'Cs', 'Cr', 'Tm', 'Cu', 'Er']
     np.random.seed(seed=i)
     elem_rnd_chem = {}
-    size=400
+    size=200
     for elem in elements:
         elem_rnd_chem[elem] = np.random.normal(size=size)
     df_rnd_chem = pd.DataFrame(elem_rnd_chem).T
