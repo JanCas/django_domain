@@ -7,5 +7,11 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/django_domain</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="django_domain@10.96.65.215" uuid="723a2326-8755-414c-affb-398b2445ba7c">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://10.96.65.215:5432/django_domain</jdbc-url>
+    </data-source>
   </component>
 </project>
