@@ -14,7 +14,7 @@ def create_models():
                 'mat_prop': mat_prop[0]
             }
             model = Model.objects.get_or_create(**model_kwargs)[0]
-            print('Created model with {} and {}'.format(cbfv[0], mat_prop[1]))
+            print('Created model with {} and {}'.format(cbfv[1], mat_prop[1]))
 
             ModelParams.objects.get_or_create(**{'model':model})
             print('creating model params')
