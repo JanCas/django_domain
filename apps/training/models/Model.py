@@ -62,6 +62,8 @@ class Model(models.Model):
 
         # setting the name
         self.set_name()
+        self.trained = False
+        self.save()
 
         # settign the GPU
         config = ConfigProto()
