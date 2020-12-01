@@ -32,13 +32,16 @@ class ModelScoresInLine(admin.TabularInline):
 class ModelAdmin(admin.ModelAdmin):
     inlines = (ModelParamsInLine, MetricsInLine, CallbacksInLine, ModelScoresInLine)
 
-    list_display = ('name', 'cbfv', 'mat_prop', 'batch_size', 'epochs', 'trained')
+    list_display = ('name', 'cbfv', 'mat_prop', 'batch_size', 'epochs', 'trained', 'tf_error', 'memory_error')
 
-    actions = ['train']
+    actions = ['train', 'import_models']
 
     def train(self, request, queryset):
         for model in queryset:
             model.train()
 
+    def import_models(self, request, queryset):
+        from misc.Scripts.dataGen1 import create_models
+        create_models()
 
 admin.site.register(Model, ModelAdmin)

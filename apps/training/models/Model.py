@@ -19,7 +19,7 @@ class Model(models.Model):
         (1, 'ael_bulk_modulus_vrh'),
         (2, 'ael_debye_temperature'),
         (3, 'ael_shear_modulus_vrh'),
-        (4, 'agl_log10_termal_expansion_300K'),
+        (4, 'agl_log10_thermal_expansion_300K'),
         (5, 'agl_thermal_conductivity_300K'),
         (6, 'energy_atom')
     ]
@@ -32,6 +32,8 @@ class Model(models.Model):
     epochs = models.IntegerField(default=200, null=False)
 
     trained = models.BooleanField(default=False, null=False)
+    tf_error = models.BooleanField(default=False, null=False)
+    memory_error = models.BooleanField(default=False, null=False)
 
     # model_graph = models.ImageField(null=True)
 
@@ -45,7 +47,7 @@ class Model(models.Model):
         from .Metrics import Metrics
         from .Callbacks import Callbacks
 
-        from misc.conv_net import Alex_Net
+        from misc.conv_net import alex_net
         from misc.helper_functions import update_model_scores
         from misc.pandas_creator import generate_image_data_generators
 
@@ -88,7 +90,7 @@ class Model(models.Model):
             opt = getattr(import_module('.optimizers', 'tensorflow.keras'), model_params['optimizer'])(
                 model_params['learning_rate'])
 
-            model = Alex_Net(input=data['input'], regularization=model_params['regularization'],
+            model = getattr(import_module('misc.conv_net'), model_params['model_type'])(input=data['input'], regularization=model_params['regularization'],
                              dropout=model_params['dropout'])
 
             model.compile(loss=model_params['loss'], optimizer=opt, metrics=metrics)
@@ -118,14 +120,27 @@ class Model(models.Model):
             eval = model.evaluate(data['test'])
 
             # saving the training data
-            update_model_scores(self, history, eval, metrics)
+            update_model_scores(self, model_params, history, eval, metrics)
 
             self.trained = True
+            self.tf_error = False
+            self.memory_error = False
             self.save()
+
+            del model
+            del data
         except tf.errors.ResourceExhaustedError:
             if self.batch_size > 4:
                 self.batch_size /= 2
+                self.tf_error = True
                 self.save()
+        except MemoryError:
+            self.memory_error = True
+            self.save()
+        except ValueError:
+            ModelParams.objects.get_or_create(model=self)[0].set_model_type(1)
+            self.tf_error = True
+            self.save()
 
         collect()
         collect()
