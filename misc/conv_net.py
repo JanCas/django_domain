@@ -60,7 +60,7 @@ def light_alex_net(input: Input, regularization: string = None, dropout: float =
     #FC Layers
     model.add(Dense(2048, activation='relu', kernel_regularizer=regularization))
     model.add(Dropout(dropout))
-    model.add(Dense(4096, activation='relu', kernel_regularizer=regularization))
+    model.add(Dense(2048, activation='relu', kernel_regularizer=regularization))
 
     #output layer
     model.add(Dense(1))

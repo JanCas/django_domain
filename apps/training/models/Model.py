@@ -117,7 +117,7 @@ class Model(models.Model):
             ax[2].plot(history.history['val_mean_absolute_error'][3:], color='r', label='val MAE')
             ax[2].legend(loc='best', shadow=True)
             '''
-            
+
             # evaluating the model
             eval = model.evaluate(data['test'])
 
