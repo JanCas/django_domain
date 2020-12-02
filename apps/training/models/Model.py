@@ -55,8 +55,6 @@ class Model(models.Model):
         from numpy import floor
         from gc import collect
 
-        from matplotlib.pyplot import subplots
-
         from tensorflow.compat.v1 import ConfigProto, Session
         import tensorflow as tf
 
@@ -104,7 +102,8 @@ class Model(models.Model):
                                 validation_data=data['val'],
                                 callbacks=callbacks)
 
-            # saving the training image
+
+            '''# saving the training image
             fig, ax = subplots(3, 1)
             ax[0].plot(history.history['loss'][3:], color='b', label="Training loss")
             ax[0].plot(history.history['val_loss'][3:], color='r', label="validation loss", axes=ax[0])
@@ -117,7 +116,8 @@ class Model(models.Model):
             ax[2].plot(history.history['mean_absolute_error'][3:], color='b', label='mean absolute error')
             ax[2].plot(history.history['val_mean_absolute_error'][3:], color='r', label='val MAE')
             ax[2].legend(loc='best', shadow=True)
-
+            '''
+            
             # evaluating the model
             eval = model.evaluate(data['test'])
 
