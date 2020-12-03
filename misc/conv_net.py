@@ -66,3 +66,28 @@ def light_alex_net(input: Input, regularization: string = None, dropout: float =
     model.add(Dense(1))
 
     return model
+
+def light_alex_net_v2(input: Input, regularization: string = None, dropout: float = .4):
+
+    model = Sequential()
+    model.add(input)
+
+    #layer 2
+    model.add(Conv2D(filters=64, kernel_size=5, activation='relu'))
+    model.add(MaxPooling2D(strides=2, pool_size=3, padding='same'))
+
+    #layer 3
+    model.add(Conv2D(filters=128, kernel_size=5, activation='relu'))
+    model.add(MaxPooling2D(strides=2, pool_size=3, padding='same'))
+
+    model.add(Flatten())
+
+    #FC Layers
+    model.add(Dense(2048, activation='relu', kernel_regularizer=regularization))
+    model.add(Dropout(dropout))
+    model.add(Dense(1024, activation='relu', kernel_regularizer=regularization))
+
+    #output layer
+    model.add(Dense(1))
+
+    return model

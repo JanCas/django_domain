@@ -21,7 +21,8 @@ class ModelParams(models.Model):
 
     MODEL_TYPE_CHOICES = [
         (0, 'alex_net'),
-        (1, 'light_alex_net')
+        (1, 'light_alex_net'),
+        (2, 'light_alex_net_v2')
     ]
 
     model = models.ForeignKey('training.Model', on_delete=models.CASCADE)
