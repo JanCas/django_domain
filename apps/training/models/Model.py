@@ -47,7 +47,6 @@ class Model(models.Model):
         from .Metrics import Metrics
         from .Callbacks import Callbacks
 
-        from misc.conv_net import alex_net
         from misc.helper_functions import update_model_scores
         from misc.pandas_creator import generate_image_data_generators
 

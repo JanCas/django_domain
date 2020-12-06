@@ -34,7 +34,7 @@ class ModelAdmin(admin.ModelAdmin):
 
     list_display = ('name', 'cbfv', 'mat_prop', 'batch_size', 'epochs', 'trained', 'tf_error', 'memory_error')
 
-    actions = ['train', 'import_models']
+    actions = ['train', 'import_models', 'save_csv']
 
     def train(self, request, queryset):
         for model in queryset:
@@ -44,4 +44,7 @@ class ModelAdmin(admin.ModelAdmin):
         from misc.Scripts.dataGen1 import create_models
         create_models()
 
+    def save_csv(self, request, queryset):
+        from misc.Scripts.dataGen2 import create_results_csv
+        create_results_csv()
 admin.site.register(Model, ModelAdmin)
