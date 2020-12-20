@@ -80,7 +80,7 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation:bool) -> arr
     train_x_vector = zeros((len(train), final_size, len(X_df)))
     for form_train in chemical_form_train_list:
         try:
-                train_x_vector = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
+                train_x_vector[index] = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
                                                             chem_form=form_train)
                 index += 1
         except KeyError:
