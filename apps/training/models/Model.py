@@ -132,14 +132,17 @@ class Model(models.Model):
             del model
             del data
         except tf.errors.ResourceExhaustedError:
+            print('TF MEMORY EXHAUSTED ERROR')
             if self.batch_size > 4:
                 self.batch_size /= 2
                 self.tf_error = True
                 self.save()
         except MemoryError:
+            print('MEMORY ERROR')
             self.memory_error = True
             self.save()
         except ValueError:
+            print('VALUE ERROR')
             ModelParams.objects.get_or_create(model=self)[0].set_model_type(1)
             self.tf_error = True
             self.save()
