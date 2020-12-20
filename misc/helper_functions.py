@@ -1,3 +1,5 @@
+from pandas import DataFrame
+
 def update_model_scores(model, params, history, eval, metrics):
     from apps.training.models.ModelScores import ModelScores
 
@@ -30,3 +32,16 @@ def update_model_scores(model, params, history, eval, metrics):
         'MSE': eval[metrics.index('mean_squared_error') + 1]
     }
     ModelScores.objects.get_or_create(**kwargs_test, **params)
+
+def duplicate_labels(y: DataFrame) -> DataFrame:
+    """
+    duplicates all labels for the
+    :param y:
+    :return:
+    """
+    y_new = DataFrame(columns = ['cif_id', 'target', 'chemical_form', 'num_elem'])
+    for i, row in y.iterrows():
+        y_new = y_new.append(row, ignore_index=True)
+        y_new = y_new.append(row, ignore_index=True)
+
+    return y_new

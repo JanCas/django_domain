@@ -6,9 +6,10 @@ from numpy import array, sum, zeros, pad, floor, ceil, concatenate, flipud, shap
 from re import findall
 from tensorflow.keras import Input
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from misc.helper_functions import duplicate_labels
 
 
-def get_train_test_val(material_prop: string) -> dict:
+def get_train_test_val(material_prop: string, augmentation: bool) -> dict:
     """
     gets the train/test/val data and puts them into a dataframe
     adds 2 coloumns to the dataframe 'chemical_form'
@@ -34,6 +35,11 @@ def get_train_test_val(material_prop: string) -> dict:
     val_df['num_elem'] = val_df.apply(lambda x: sum(ceil(array(findall('[0-9]*\.?[0-9]+', x[2]), dtype='float'))),
                                       axis=1)
 
+    if augmentation:
+        train_df = duplicate_labels(train_df)
+        test_df = duplicate_labels(test_df)
+        val_df = duplicate_labels(val_df)
+    print('Labels Created')
     return {'train': train_df, 'test': test_df, 'val': val_df}
 
 
@@ -171,7 +177,7 @@ def generate_image_data_generators(material_prop: string, cbfv: string, batch_si
     generate the keras image preprocessing which will be used in the fit function
     :return:
     """
-    y = get_train_test_val(material_prop)
+    y = get_train_test_val(material_prop, augmentation= augmentation)
     x = get_train_test_val_X_vector(cbfv=cbfv, y=y, augmentation=augmentation)
 
     # creating y_labels
