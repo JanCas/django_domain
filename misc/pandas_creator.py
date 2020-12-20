@@ -76,48 +76,35 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation:bool) -> arr
 
     final_size = int(find_input_size(y))
 
-    first = True
-    train_x_vector = None
+    index = 0
+    train_x_vector = zeros((len(train), final_size, len(X_df)))
     for form_train in chemical_form_train_list:
         try:
-            if first:
                 train_x_vector = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
                                                             chem_form=form_train, augmentation=augmentation)
-                first = False
-            else:
-                train_x_vector = concatenate((train_x_vector, get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
-                                                            chem_form=form_train, augmentation=augmentation)), axis=0)
+                index += 1
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_train))
     print('forming the train x vector done')
 
-
-    test_x_vector = None
-    first = True
+    index = 0
+    test_x_vector = zeros((len(test), final_size, len(X_df)))
     for form_test in chemical_form_test_list:
         try:
-            if first:
-                test_x_vector = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
-                                                           chem_form=form_test, augmentation=augmentation)
-                first = False
-            else:
-                test_x_vector = concatenate((test_x_vector, get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
-                                                           chem_form=form_test, augmentation=augmentation)))
+                test_x_vector[index] = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
+                                                           chem_form=form_test)
+                index += 1
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_test))
     print('forming the test x vector done')
 
-    val_x_vector = None
-    first = True
+    index = 0
+    val_x_vector = zeros((len(val), final_size, len(X_df)))
     for form_val in chemical_form_val_list:
         try:
-            if first:
-                val_x_vector = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
-                                                          chem_form=form_val, augmentation=augmentation)
-                first = False
-            else:
-                val_x_vector = concatenate((val_x_vector, get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
-                                                          chem_form=form_val, augmentation=augmentation)))
+                val_x_vector[index] = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
+                                                          chem_form=form_val)
+                index += 1
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_val))
     print('forming the val x vector done')
@@ -169,7 +156,7 @@ def get_x_with_chemical_formula(x_df: DataFrame, final_size: tuple, chem_form: s
 
     chem_form_array = pad(chem_form_array, ((top_pad, bottom_pad), (0, 0)), constant_values=(0, 0))
 
-    return array([chem_form_array, flipud(chem_form_array)]) if augmentation else chem_form_array
+    return chem_form_array
 
 
 def generate_image_data_generators(material_prop: string, cbfv: string, batch_size: int, augmentation: bool) -> dict:
