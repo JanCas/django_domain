@@ -81,7 +81,7 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation:bool) -> arr
     for form_train in chemical_form_train_list:
         try:
                 train_x_vector = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
-                                                            chem_form=form_train, augmentation=augmentation)
+                                                            chem_form=form_train)
                 index += 1
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_train))
@@ -128,7 +128,7 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation:bool) -> arr
     return {'train': train_x_vector, 'test': test_x_vector, 'val': val_x_vector}
 
 
-def get_x_with_chemical_formula(x_df: DataFrame, final_size: tuple, chem_form: string, augmentation: bool) -> array:
+def get_x_with_chemical_formula(x_df: DataFrame, final_size: tuple, chem_form: string) -> array:
     """
     constructing one x matrix based on a chemical formulas and padding it in to the desired size
     :param x_df:
