@@ -32,6 +32,7 @@ class ModelParams(models.Model):
     learning_rate = models.FloatField(default=.01)
     regularization = models.SmallIntegerField(default=1, choices=REGULARIZATION_CHOICES)
     dropout = models.FloatField(default=.4)
+    augmentation = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = 'Model Params'
@@ -43,7 +44,8 @@ class ModelParams(models.Model):
                 'learning_rate': self.learning_rate,
                 'regularization': self.REGULARIZATION_CHOICES[self.regularization][-1],
                 'dropout': self.dropout,
-                'model_type': self.MODEL_TYPE_CHOICES[self.model_type][-1]}
+                'model_type': self.MODEL_TYPE_CHOICES[self.model_type][-1],
+                'augmentation': self.augmentation}
 
     def set_model_type(self, choice):
         self.model_type = choice

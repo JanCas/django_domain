@@ -18,6 +18,7 @@ class ModelScores(models.Model):
     learning_rate = models.FloatField(default=.01)
     regularization = models.CharField(default=None, max_length=25)
     dropout = models.FloatField(default=None)
+    augmentation = models.BooleanField(default=False)
     epochs = models.IntegerField(default=200)
     batch_size = models.IntegerField(default=25)
     model_type = models.CharField(default=None, max_length=25, null=True)

@@ -2,7 +2,7 @@ import string
 from pandas import read_csv, DataFrame
 from django_domain.settings import BASE_DIR
 from os.path import join
-from numpy import array, sum, zeros, pad, floor, ceil
+from numpy import array, sum, zeros, pad, floor, ceil, concatenate, flipud, shape
 from re import findall
 from tensorflow.keras import Input
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -52,7 +52,7 @@ def find_input_size(x: dict) -> int:
     return y_init
 
 
-def get_train_test_val_X_vector(cbfv: string, y: dict) -> array:
+def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation:bool) -> array:
     """
     reads the desired feature vector and pads it to the needed size to make it a trainable rank 2 tensor
     :param cbfv:
@@ -70,37 +70,50 @@ def get_train_test_val_X_vector(cbfv: string, y: dict) -> array:
 
     final_size = int(find_input_size(y))
 
-    index = 0
-    train_x_vector = zeros((len(train), final_size, len(X_df)))
+    first = True
+    train_x_vector = None
     for form_train in chemical_form_train_list:
         try:
-            train_x_vector[index] = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
-                                                            chem_form=form_train)
+            if first:
+                train_x_vector = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
+                                                            chem_form=form_train, augmentation=augmentation)
+                first = False
+            else:
+                train_x_vector = concatenate((train_x_vector, get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
+                                                            chem_form=form_train, augmentation=augmentation)), axis=0)
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_train))
-        index += 1
     print('forming the train x vector done')
 
-    index = 0
-    test_x_vector = zeros((len(test), final_size, len(X_df)))
+
+    test_x_vector = None
+    first = True
     for form_test in chemical_form_test_list:
         try:
-            test_x_vector[index] = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
-                                                           chem_form=form_test)
+            if first:
+                test_x_vector = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
+                                                           chem_form=form_test, augmentation=augmentation)
+                first = False
+            else:
+                test_x_vector = concatenate((test_x_vector, get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
+                                                           chem_form=form_test, augmentation=augmentation)))
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_test))
-        index += 1
     print('forming the test x vector done')
 
-    index = 0
-    val_x_vector = zeros((len(val), final_size, len(X_df)))
+    val_x_vector = None
+    first = True
     for form_val in chemical_form_val_list:
         try:
-            val_x_vector[index] = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
-                                                          chem_form=form_val)
+            if first:
+                val_x_vector = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
+                                                          chem_form=form_val, augmentation=augmentation)
+                first = False
+            else:
+                val_x_vector = concatenate((val_x_vector, get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
+                                                          chem_form=form_val, augmentation=augmentation)))
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_val))
-        index += 1
     print('forming the val x vector done')
 
     # reshaping the vectors into rank 4 vectors (samples, height, width, channels)
@@ -111,10 +124,18 @@ def get_train_test_val_X_vector(cbfv: string, y: dict) -> array:
     val_x_vector = val_x_vector.reshape(val_x_vector.shape[0], val_x_vector.shape[1],
                                         val_x_vector.shape[2], 1)
 
+    print('--------------------------------------------------')
+    print('--------------------------------------------------')
+    print(f'Train shape -> {shape(train_x_vector)}')
+    print(f'Test shape  -> {shape(test_x_vector)}')
+    print(f'Val shape   -> {shape(val_x_vector)}')
+    print('--------------------------------------------------')
+    print('--------------------------------------------------')
+
     return {'train': train_x_vector, 'test': test_x_vector, 'val': val_x_vector}
 
 
-def get_x_with_chemical_formula(x_df: DataFrame, final_size: tuple, chem_form: string) -> array:
+def get_x_with_chemical_formula(x_df: DataFrame, final_size: tuple, chem_form: string, augmentation: bool) -> array:
     """
     constructing one x matrix based on a chemical formulas and padding it in to the desired size
     :param x_df:
@@ -142,16 +163,16 @@ def get_x_with_chemical_formula(x_df: DataFrame, final_size: tuple, chem_form: s
 
     chem_form_array = pad(chem_form_array, ((top_pad, bottom_pad), (0, 0)), constant_values=(0, 0))
 
-    return chem_form_array
+    return array([chem_form_array, flipud(chem_form_array)]) if augmentation else chem_form_array
 
 
-def generate_image_data_generators(material_prop: string, cbfv: string, batch_size: int) -> dict:
+def generate_image_data_generators(material_prop: string, cbfv: string, batch_size: int, augmentation: bool) -> dict:
     """
     generate the keras image preprocessing which will be used in the fit function
     :return:
     """
     y = get_train_test_val(material_prop)
-    x = get_train_test_val_X_vector(cbfv=cbfv, y=y)
+    x = get_train_test_val_X_vector(cbfv=cbfv, y=y, augmentation=augmentation)
 
     # creating y_labels
     train_label = y['train']['target'].to_numpy()

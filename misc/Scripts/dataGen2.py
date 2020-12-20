@@ -19,6 +19,7 @@ def create_results_csv():
         'dropout': [],
         'epochs': [],
         'batch_size': [],
+        'model_type': []
     }
     for model in Model.objects.all():
         for model_score in ModelScores.objects.filter(model=model):
@@ -31,4 +32,4 @@ def create_results_csv():
 
     df = DataFrame(result_dict)
     result_dir = join(BASE_DIR, 'results', 'results.csv')
-    df.to_csv(result_dir)
+    df.to_csv(result_dir, index=False)

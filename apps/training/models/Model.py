@@ -70,11 +70,12 @@ class Model(models.Model):
         # clearing the session
         tf.keras.backend.clear_session()
         try:
+            model_params = ModelParams.objects.get_or_create(model=self)[0].get_dict()
+
             # getting the data
             data = generate_image_data_generators(material_prop=self.MAT_PROP_CHOICES[self.mat_prop][-1],
-                                                  cbfv=self.CBFV_CHOICES[self.cbfv][-1], batch_size=self.batch_size)
-
-            model_params = ModelParams.objects.get_or_create(model=self)[0].get_dict()
+                                                  cbfv=self.CBFV_CHOICES[self.cbfv][-1], batch_size=self.batch_size,
+                                                  augmentation=model_params['augmentation'])
 
             metrics = []
             for metric in Metrics.objects.filter(model=self):
