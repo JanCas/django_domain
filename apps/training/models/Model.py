@@ -64,7 +64,7 @@ class Model(models.Model):
 
         # settign the GPU
         config = ConfigProto()
-        config.gpu_options.allow_growth = True
+        config.gpu_options.per_process_gpu_memory_fraction = 1
         session = Session(config=config)
 
         # clearing the session
@@ -141,8 +141,9 @@ class Model(models.Model):
             print('MEMORY ERROR')
             self.memory_error = True
             self.save()
-        except ValueError:
+        except ValueError as value_error:
             print('VALUE ERROR')
+            print(value_error)
             ModelParams.objects.get_or_create(model=self)[0].set_model_type(1)
             self.tf_error = True
             self.save()

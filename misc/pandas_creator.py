@@ -83,10 +83,13 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation: bool) -> ar
         try:
             train_x_vector[index] = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
                                                                 chem_form=form_train, upside=upside)
-            upside = not upside
+            if augmentation:
+                upside = not upside
             index += 1
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_train))
+            train = train.drop(form_train)
+    train_x_vector = train_x_vector[:len(train)]
     print('forming the train x vector done')
 
     index = 0
@@ -96,10 +99,13 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation: bool) -> ar
         try:
             test_x_vector[index] = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
                                                                chem_form=form_test, upside=upside)
-            upside = not upside
+            if augmentation:
+                upside = not upside
             index += 1
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_test))
+            test = test.drop(form_test)
+    test_x_vector = test_x_vector[:len(test)]
     print('forming the test x vector done')
 
     index = 0
@@ -109,10 +115,13 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation: bool) -> ar
         try:
             val_x_vector[index] = get_x_with_chemical_formula(x_df=X_df, final_size=(final_size, len(X_df)),
                                                               chem_form=form_val, upside=upside)
-            upside = not upside
+            if augmentation:
+                upside = not upside
             index += 1
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_val))
+            val = val.drop(form_val)
+    val_x_vector = val_x_vector[:len(val)]
     print('forming the val x vector done')
 
     # reshaping the vectors into rank 4 vectors (samples, height, width, channels)
@@ -125,13 +134,13 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation: bool) -> ar
 
     print('--------------------------------------------------')
     print('--------------------------------------------------')
-    print(f'Train shape -> {shape(train_x_vector)}')
-    print(f'Test shape  -> {shape(test_x_vector)}')
-    print(f'Val shape   -> {shape(val_x_vector)}')
+    print(f'Train shape -> {shape(train_x_vector)} || labels -> {len(train)}')
+    print(f'Test shape  -> {shape(test_x_vector)}  || labels -> {len(test)}')
+    print(f'Val shape   -> {shape(val_x_vector)}   || labels -> {len(val)}')
     print('--------------------------------------------------')
     print('--------------------------------------------------')
 
-    return {'train': train_x_vector, 'test': test_x_vector, 'val': val_x_vector}
+    return {'train': (train, train_x_vector), 'test': (test, test_x_vector), 'val': (val, val_x_vector)}
 
 
 def get_x_with_chemical_formula(x_df: DataFrame, final_size: tuple, chem_form: string, upside: bool) -> array:
@@ -174,15 +183,15 @@ def generate_image_data_generators(material_prop: string, cbfv: string, batch_si
     x = get_train_test_val_X_vector(cbfv=cbfv, y=y, augmentation=augmentation)
 
     # creating y_labels
-    train_label = y['train']['target'].to_numpy()
-    test_label = y['test']['target'].to_numpy()
-    val_label = y['val']['target'].to_numpy()
+    train_label = x['train'][0]['target'].to_numpy()
+    test_label = x['test'][0]['target'].to_numpy()
+    val_label = x['val'][0]['target'].to_numpy()
 
     image_gen = ImageDataGenerator()
 
-    train_gen = image_gen.flow(x=x['train'], y=train_label, batch_size=batch_size)
-    test_gen = image_gen.flow(x=x['test'], y=test_label, batch_size=batch_size)
-    val_gen = image_gen.flow(x=x['val'], y=val_label, batch_size=batch_size)
+    train_gen = image_gen.flow(x=x['train'][1], y=train_label, batch_size=batch_size)
+    test_gen = image_gen.flow(x=x['test'][1], y=test_label, batch_size=batch_size)
+    val_gen = image_gen.flow(x=x['val'][1], y=val_label, batch_size=batch_size)
 
-    keras_input = Input(shape=(x['train'].shape[1], x['train'].shape[2], x['train'].shape[3]))
+    keras_input = Input(shape=(x['train'][1].shape[1], x['train'][1].shape[2], x['train'][1].shape[3]))
     return {'train': train_gen, 'test': test_gen, 'val': val_gen, 'input': keras_input}
