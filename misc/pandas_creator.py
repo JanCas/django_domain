@@ -87,6 +87,7 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation: bool) -> ar
                 upside = not upside
             index += 1
         except KeyError:
+            print(index)
             print('the feature vector is missing a element in the formula {}'.format(form_train))
             train = train.drop(index).reset_index()
     train_x_vector = train_x_vector[:len(train)]
