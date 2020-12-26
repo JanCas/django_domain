@@ -89,7 +89,7 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation: bool) -> ar
         except KeyError:
             print(index)
             print('the feature vector is missing a element in the formula {}'.format(form_train))
-            train = train.drop(index).reset_index()
+            train = train.drop(index).reset_index(drop=True)
     train_x_vector = train_x_vector[:len(train)]
     print('forming the train x vector done')
 
@@ -105,7 +105,7 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation: bool) -> ar
             index += 1
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_test))
-            test = test.drop(index).reset_index()
+            test = test.drop(index).reset_index(drop=True)
     test_x_vector = test_x_vector[:len(test)]
     print('forming the test x vector done')
 
@@ -121,7 +121,7 @@ def get_train_test_val_X_vector(cbfv: string, y: dict, augmentation: bool) -> ar
             index += 1
         except KeyError:
             print('the feature vector is missing a element in the formula {}'.format(form_val))
-            val = val.drop(index).reset_index()
+            val = val.drop(index).reset_index(drop=True)
     val_x_vector = val_x_vector[:len(val)]
     print('forming the val x vector done')
 
