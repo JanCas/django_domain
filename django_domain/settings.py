@@ -81,10 +81,10 @@ WSGI_APPLICATION = 'django_domain.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'django_domain',
-        'USER': 'janlc',
+        'NAME': 'postgres',
+        'USER': 'postgres',
         'PASSWORD': 'jancas01',
-        'HOST': '192.168.86.37',
+        'HOST': '127.0.0.1',
         'PORT': 5432
     }
 }
